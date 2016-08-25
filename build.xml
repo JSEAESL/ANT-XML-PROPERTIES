@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<project name="测试脚本" default="build" basedir="." >
+	<tstamp>
+		<format property="timestamp" pattern="yyyy-MM-dd_HH-mm-ss" />
+	</tstamp>
+
+	<property file="build.properties"/>
+	<property environment="env" /> <!-- 系统变量  env.* -->
+    <taskdef resource="flexTasks.tasks" classpath="${LIB}/flexTasks.jar" />
+
+
+
+    <target name="build" depends="clean,init,compile,runApp" />
+
+
+	<target name="clean">
+		<!-- <delete dir="${DEPLOY_DIR}/assets" />
+        <copy todir="${DEPLOY_DIR}/assets">
+            <fileset dir="${SRC_DIR}/assets" />
+        </copy> -->
+       	<!-- <copy file="G:/code/ant/build.xml" todir="G:/code/ant/copy" overwrite="true" /> -->
+	</target>
+
+
+	<target name="init">
+	</target>
+
+	<target name="compileSWF">
+	     <echo message="Compiling swf"/>
+	     <mxmlc file="${full path to the project File}" output="${Name for the compiled swf}">
+	          <load-config filename="${FLEX_HOME}/frameworks/airmobile-config.xml"/>
+	          <source-path path-element="${FLEX_HOME}/frameworks"/>
+	          <static-link-runtime-shared-libraries />
+		  		<!-- Include this piece to pull in the Flex Framework or it won't compile. -->
+	          	<compiler.library-path dir="${FLEX_HOME}/frameworks" append="true">
+	               <include name="libs/*" />
+	          	</compiler.library-path>
+
+				<!-- 必须加上这行，如果不加，当使用[Embed]的标签的时候，就会出现VerifyError: Error #1014: 无法找到类 。 原因应该是没有将mx.core包编译进入。官方文档说这个属性默认是true， 不要相信它-->
+	          	<static-link-runtime-shared-libraries>true</static-link-runtime-shared-libraries>
+				<!-- 编译成可调试的版本 -->
+				<compiler.debug>true</compiler.debug>
+	     </mxmlc>
+	</target>
+
+	<target name="runApp">
+	    <exec executable="${FLASH_PLAYER}">
+	        <arg value="${SAMPLE_SWF}/Live2DSampleApplication.swf"/>
+	    </exec>
+	</target>
+
+	<target name="buildLib">
+	    <path id="paths">
+	        <pathelement path="${basedir}/../"/>
+	    </path>
+   		<pathconvert dirsep="/" property="covbasedir" refid="paths"/>
+	    <fileset dir="${covbasedir}/src" id="files">
+	        <include name="**/*.as"/>
+	    </fileset>
+	    <pathconvert property="classes" pathsep=" " dirsep="." refid="files">
+	        <map from="\" to="/"/>
+	        <map from="${covbasedir}/src/" to=""/>
+	        <mapper>
+	            <chainedmapper>
+	                <globmapper from="*.as" to="*"/>
+	            </chainedmapper>
+	        </mapper>
+	    </pathconvert>
+    	<echo message="${classes}"/>
+	    <compc output="${OUTPUT_DIR}/easily.swc" include-classes="${classes}"
+	        optimize="true" benchmark="true" strict="true" actionscript-file-encoding="utf-8"
+	        locale="en_US" allow-source-path-overlap="true"
+	        use-resource-bundle-metadata="true">
+	        <source-path path-element="${covbasedir}/src"/>
+
+	        <compiler.external-library-path dir="${LIBS_DIR}" append="true">
+	            <include name="*.swc"/>
+	        </compiler.external-library-path>
+	    </compc>
+	</target>
+
+</project>
+
